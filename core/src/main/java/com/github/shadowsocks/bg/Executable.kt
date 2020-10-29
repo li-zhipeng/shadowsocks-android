@@ -32,9 +32,10 @@ import java.io.FileNotFoundException
 object Executable {
     const val REDSOCKS = "libredsocks.so"
     const val SS_LOCAL = "libss-local.so"
+    const val SS_SERVER = "libss-server.so"
     const val TUN2SOCKS = "libtun2socks.so"
 
-    private val EXECUTABLES = setOf(SS_LOCAL, REDSOCKS, TUN2SOCKS)
+    private val EXECUTABLES = setOf(SS_LOCAL, SS_SERVER, REDSOCKS, TUN2SOCKS)
 
     fun killAll() {
         for (process in File("/proc").listFiles { _, name -> TextUtils.isDigitsOnly(name) }) {

@@ -279,6 +279,46 @@ LOCAL_LDLIBS := -llog
 include $(BUILD_SHARED_EXECUTABLE)
 
 ########################################################
+## shadowsocks-libev server
+########################################################
+
+include $(CLEAR_VARS)
+
+SHADOWSOCKS_SOURCES := server.c \
+    resolv.c \
+    utils.c jconf.c json.c udprelay.c cache.c netutils.c \
+    crypto.c aead.c stream.c ppbloom.c base64.c \
+    plugin.c \
+    rule.c acl.c \
+
+LOCAL_MODULE    := ss-server
+LOCAL_SRC_FILES := $(addprefix shadowsocks-libev/src/, $(SHADOWSOCKS_SOURCES))
+LOCAL_CFLAGS    := -Wall -fno-strict-aliasing -DMODULE_REMOTE -U__ANDROID__ \
+					-DUSE_CRYPTO_MBEDTLS -DHAVE_CONFIG_H \
+					-DCONNECT_IN_PROGRESS=EINPROGRESS \
+					-I$(LOCAL_PATH)/include/shadowsocks-libev \
+					-I$(LOCAL_PATH)/include \
+					-I$(LOCAL_PATH)/libancillary \
+					-I$(LOCAL_PATH)/mbedtls/include  \
+					-I$(LOCAL_PATH)/pcre \
+					-I$(LOCAL_PATH)/libsodium/src/libsodium/include \
+					-I$(LOCAL_PATH)/libsodium/src/libsodium/include/sodium \
+					-I$(LOCAL_PATH)/shadowsocks-libev/libcork/include \
+					-I$(LOCAL_PATH)/shadowsocks-libev/libipset/include \
+					-I$(LOCAL_PATH)/shadowsocks-libev/libbloom \
+					-I$(LOCAL_PATH)/libev \
+					-I$(LOCAL_PATH)/shadowsocks-libev/libc-ares/include \
+					-I$(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib \
+					-I$(LOCAL_PATH)/shadowsocks-libev/c-ares_inc
+
+LOCAL_STATIC_LIBRARIES := libev libmbedtls libipset libcork libbloom \
+	libsodium libancillary libpcre libc-ares
+
+LOCAL_LDLIBS := -llog
+
+include $(BUILD_SHARED_EXECUTABLE)
+
+########################################################
 ## tun2socks
 ########################################################
 
@@ -385,6 +425,66 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/mbedtls/include
 MBEDTLS_SOURCES := $(wildcard $(LOCAL_PATH)/mbedtls/library/*.c)
 
 LOCAL_SRC_FILES := $(MBEDTLS_SOURCES:$(LOCAL_PATH)/%=%)
+
+include $(BUILD_STATIC_LIBRARY)
+
+########################################################
+## c-ares
+########################################################
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := c-ares
+
+LOCAL_CFLAGS += -DHAVE_CONFIG_H
+
+LOCAL_C_INCLUDES := \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/include \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares \
+        $(LOCAL_PATH)/shadowsocks-libev/c-ares_inc
+
+C_ARES_SOURCES := \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares__close_sockets.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares__get_hostent.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares__read_line.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares__timeval.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_cancel.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_create_query.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_data.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_destroy.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_expand_name.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_free_hostent.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_free_string.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_gethostbyname.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_gethostbyname.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_getsock.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_init.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_library_init.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_llist.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_nowarn.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_options.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_parse_a_reply.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_parse_aaaa_reply.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_process.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_query.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_search.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_send.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_strerror.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_timeout.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_version.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/bitncmp.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/inet_net_pton.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_getnameinfo.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_strdup.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_strsplit.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_android.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares__parse_into_addrinfo.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_freeaddrinfo.c \
+        $(LOCAL_PATH)/shadowsocks-libev/libc-ares/src/lib/ares_getaddrinfo.c \
+
+
+LOCAL_SRC_FILES := $(C_ARES_SOURCES:$(LOCAL_PATH)/%=%)
 
 include $(BUILD_STATIC_LIBRARY)
 

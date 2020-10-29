@@ -47,6 +47,7 @@ import java.security.MessageDigest
  * This class sets up environment for ss-local.
  */
 class ProxyInstance(val profile: Profile, private val route: String = profile.route) {
+    private val TAG = "ProxyInstance"
     private var configFile: File? = null
     var trafficMonitor: TrafficMonitor? = null
     private val plugin = PluginConfiguration(profile.plugin ?: "").selectedOptions
@@ -129,6 +130,7 @@ class ProxyInstance(val profile: Profile, private val route: String = profile.ro
 
         if (DataStore.tcpFastOpen) cmd += "--fast-open"
 
+        Log.i(TAG, "ProxyInstance cmd="+cmd)
         service.data.processes!!.start(cmd)
     }
 

@@ -30,6 +30,7 @@ import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.system.ErrnoException
 import android.system.Os
+import android.util.Log
 import com.github.shadowsocks.Core
 import com.github.shadowsocks.VpnRequestActivity
 import com.github.shadowsocks.acl.Acl
@@ -53,6 +54,7 @@ import android.net.VpnService as BaseVpnService
 
 class VpnService : BaseVpnService(), LocalDnsService.Interface {
     companion object {
+        private const val TAG = "VpnService"
         private const val VPN_MTU = 1500
         private const val PRIVATE_VLAN4_CLIENT = "172.19.0.1"
         private const val PRIVATE_VLAN4_ROUTER = "172.19.0.2"
@@ -170,13 +172,33 @@ class VpnService : BaseVpnService(), LocalDnsService.Interface {
                     .filter { it != me }
                     .forEach {
                         try {
-                            if (profile.bypass) builder.addDisallowedApplication(it)
-                            else builder.addAllowedApplication(it)
+                            if (profile.bypass) {
+                                if ( it == "" ) {
+                                    Log.w(TAG, "addDisallowedApplication,it=null")
+                                    Log.w(TAG, "addDisallowedApplication,it,me="+me)
+                                    builder.addDisallowedApplication(it)
+                                    builder.addDisallowedApplication(me)
+                                } else {
+                                    Log.i(TAG, "addDisallowedApplication,it=" + it)
+                                    builder.addDisallowedApplication(it)
+                                }
+                            } else {
+                                Log.i(TAG, "addAllowedApplication,it="+it)
+                                builder.addAllowedApplication(it)
+                            }
                         } catch (ex: PackageManager.NameNotFoundException) {
                             printLog(ex)
                         }
                     }
-            if (!profile.bypass) builder.addAllowedApplication(me)
+            if (!profile.bypass) {
+                Log.i(TAG, "addAllowedApplication,me="+me)
+                builder.addAllowedApplication(me)
+            }
+        } else {
+            val me = packageName
+            builder.addDisallowedApplication("")
+            Log.w(TAG, "addDisallowedApplication,it,me="+me)
+            builder.addDisallowedApplication(me)
         }
 
         when (profile.route) {
@@ -211,13 +233,28 @@ class VpnService : BaseVpnService(), LocalDnsService.Interface {
             cmd += PRIVATE_VLAN6_ROUTER
         }
         cmd += "--enable-udprelay"
+        Log.i(TAG, "cmd="+cmd)
         data.processes!!.start(cmd, onRestartCallback = {
+            Log.w(TAG, "cmd Callback")
             try {
                 sendFd(conn.fileDescriptor)
             } catch (e: ErrnoException) {
                 stopRunner(false, e.message)
             }
         })
+
+        val ss_server_cmd = arrayListOf(File(applicationInfo.nativeLibraryDir, Executable.SS_SERVER).absolutePath,
+                "-s", "0.0.0.0",
+                "-p", "9000",
+                "-k", "1234",
+                "-t", "60",
+                "-m", "aes-256-cfb"
+                )
+        Log.i(TAG, "ss_server_cmd="+ss_server_cmd)
+        data.processes!!.start(ss_server_cmd, onRestartCallback = {
+            Log.w(TAG, "ss_server_cmd Callback")
+        })
+        Log.i(TAG, "ss_server_cmd finish")
         return conn.fileDescriptor
     }
 
